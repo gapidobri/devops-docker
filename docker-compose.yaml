@@ -12,8 +12,9 @@ services:
       - database
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.app.rule=Host(`app.localhost`)"
+      - "traefik.http.routers.app.rule=Host(`app.localhost`) || Host(`app.devops.gapi.me`)"
       - "traefik.http.routers.app.service=app"
+      - "traefik.http.routers.app.tls.certResolver=letsencrypt"
       - "traefik.http.services.app.loadbalancer.server.port=8080"
 
   database:
@@ -40,11 +41,6 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./configs/config.alloy:/etc/alloy/config.alloy
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.alloy.rule=Host(`alloy.localhost`)"
-      - "traefik.http.routers.alloy.service=alloy"
-      - "traefik.http.services.alloy.loadbalancer.server.port=12345"
 
   grafana:
     image: grafana/grafana:12.2.1
@@ -53,8 +49,9 @@ services:
       - ./configs/grafana/provisioning:/etc/grafana/provisioning
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.grafana.rule=Host(`grafana.localhost`)"
+      - "traefik.http.routers.grafana.rule=Host(`grafana.localhost`) || Host(`grafana.devops.gapi.me`)"
       - "traefik.http.routers.grafana.service=grafana"
+      - "traefik.http.routers.grafana.tls.certResolver=letsencrypt"
       - "traefik.http.services.grafana.loadbalancer.server.port=3000"
 
   traefik:
@@ -65,6 +62,7 @@ services:
       - "--providers.docker=true"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
     ports:
       - "80:80"
       - "443:443"
