@@ -47,6 +47,7 @@ services:
     container_name: grafana
     volumes:
       - ./configs/grafana/provisioning:/etc/grafana/provisioning
+      - grafana_data:/var/lib/grafana
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.grafana.rule=Host(`grafana.localhost`) || Host(`grafana.devops.gapi.me`)"
@@ -73,3 +74,4 @@ services:
 volumes:
   db_data:
   loki_data:
+  grafana_data:

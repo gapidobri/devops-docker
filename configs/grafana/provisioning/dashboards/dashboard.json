@@ -18,7 +18,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 0,
+  "id": 2,
   "links": [],
   "panels": [
     {
@@ -57,7 +57,7 @@
           },
           "direction": "backward",
           "editorMode": "builder",
-          "expr": "{job=\"todoapp\"} |= ``",
+          "expr": "{service_name=\"todo-app\"} |= ``",
           "queryType": "range",
           "refId": "A"
         }
@@ -80,5 +80,5 @@
   "timezone": "browser",
   "title": "Logs",
   "uid": "addrvzv",
-  "version": 2
+  "version": 1
 }

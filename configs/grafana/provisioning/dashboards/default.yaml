@@ -5,4 +5,4 @@ providers:
     folder: Logs
     type: file
     options:
-      path: /usr/local/grafana/conf/provisioning/dashboards
+      path: /etc/grafana/provisioning/dashboards
