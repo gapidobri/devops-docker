@@ -2,19 +2,29 @@ livedebugging {
   enabled = true
 }
 
-local.file_match "local_files" {
-    path_targets = [{"__path__" = "/var/log/todoapp.err", "job" = "todoapp", "hostname" = constants.hostname}]
-    sync_period  = "5s"
+discovery.docker "linux" {
+  host = "unix:///var/run/docker.sock"
 }
 
-loki.source.file "log_scrape" {
-    targets    = local.file_match.local_files.targets
-    forward_to = [loki.write.local.receiver]
-    tail_from_end = true
+discovery.relabel "logs_integrations_docker" {
+  targets = []
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex = "/(.*)"
+    target_label = "service_name"
+  }
+}
+
+loki.source.docker "default" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.docker.linux.targets
+  relabel_rules = discovery.relabel.logs_integrations_docker.rules
+  forward_to = [loki.write.local.receiver]
 }
 
 loki.write "local" {
   endpoint {
-    url = "http://localhost:3100/loki/api/v1/push"
+    url = "http://loki:3100/loki/api/v1/push"
   }
 }

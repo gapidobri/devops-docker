@@ -8,6 +8,8 @@ services:
       - DB_PORT=5432
       - DB_USER=postgres
       - DB_PASSWORD=postgres
+    depends_on:
+      - database
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.app.rule=Host(`app.localhost`)"
@@ -25,6 +27,7 @@ services:
   loki:
     image: grafana/loki:3.6.0
     container_name: loki
+    user: "0"
     command: -config.file=/etc/loki/loki-config.yaml
     volumes:
       - ./configs/loki-config.yaml:/etc/loki/loki-config.yaml
@@ -35,6 +38,7 @@ services:
     container_name: alloy
     command: run /etc/alloy/config.alloy
     volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
       - ./configs/config.alloy:/etc/alloy/config.alloy
     labels:
       - "traefik.enable=true"
