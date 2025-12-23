@@ -2,46 +2,72 @@ services:
   app:
     build:
       context: ./app
-      dockerfile: Dockerfile
     container_name: todo-app
-    ports:
-      - "5000:5000"
-  
+    environment:
+      - DB_HOST=database
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.app.rule=Host(`app.localhost`)"
+      - "traefik.http.routers.app.service=app"
+      - "traefik.http.services.app.loadbalancer.server.port=8080"
+
+  database:
+    image: postgres:18.1
+    container_name: postgres
+    environment:
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - db_data:/var/lib/postgresql
+
   loki:
     image: grafana/loki:3.6.0
     container_name: loki
     command: -config.file=/etc/loki/loki-config.yaml
     volumes:
-      - ./loki-config.yaml:/etc/loki/loki-config.yaml
-    ports: 
-      - "3100:3100"
+      - ./configs/loki-config.yaml:/etc/loki/loki-config.yaml
+      - loki_data:/usr/local/loki/data
 
-    alloy:
-      image: grafana/alloy:latest
-      container_name: alloy
-      command: run /etc/alloy/config.alloy
-      volumes:
-        - ./alloy-config.yaml:/etc/alloy/config.alloy
-      ports: 
-        - "12345:12345"
-    
-    grafana:
-      image: grafana/grafana:12.2.1
-      container_name: grafana
-      environment:
-        - GF_SECURITY_ADMIN_USER=admin
-        - GF_SECURITY_ADMIN_PASSWORD=admin
-      volumes:
-        - ./grafana/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
-        - ./grafana/default.yaml:/etc/grafana/provisioning/dashboards/default.yaml
-        - ./grafana/dashboard.json:/var/lib/grafana/dashboards/dashboard.json
-      ports: 
-        - "3000:3000"
+  alloy:
+    image: grafana/alloy:latest
+    container_name: alloy
+    command: run /etc/alloy/config.alloy
+    volumes:
+      - ./configs/config.alloy:/etc/alloy/config.alloy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.alloy.rule=Host(`alloy.localhost`)"
+      - "traefik.http.routers.alloy.service=alloy"
+      - "traefik.http.services.alloy.loadbalancer.server.port=12345"
 
-    nginx:
-      image: nginx:alpine
-      container_name: nginx
-      volumes:
-        - ./nginx.conf:/etc/nginx/nginx.conf
-      ports:
-        - "80:80"
+  grafana:
+    image: grafana/grafana:12.2.1
+    container_name: grafana
+    volumes:
+      - ./configs/grafana/provisioning:/etc/grafana/provisioning
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.grafana.rule=Host(`grafana.localhost`)"
+      - "traefik.http.routers.grafana.service=grafana"
+      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+
+  traefik:
+    image: traefik:v3.6
+    container_name: traefik
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+volumes:
+  db_data:
+  loki_data:
